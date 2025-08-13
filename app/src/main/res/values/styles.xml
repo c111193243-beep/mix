@@ -1,0 +1,7 @@
+<resources>
+    <style name="AppToolbar.Light" parent="ThemeOverlay.Material3.ActionBar">
+        <item name="android:background">@color/white</item>
+        <item name="titleTextColor">@color/textDark</item>
+        <item name="android:elevation">4dp</item>
+    </style>
+</resources>

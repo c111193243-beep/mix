@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 選取狀態時的顏色 -->
+    <item android:color="@color/titaniumBlueGray" android:state_checked="true" />
+    <!-- 未選取狀態 -->
+    <item android:color="@color/silverGray" />
+</selector>

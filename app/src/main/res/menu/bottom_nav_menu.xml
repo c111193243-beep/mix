@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_detect"
+        android:icon="@drawable/ic_detection"
+        android:title="偵測" />
+
+    <item
+        android:id="@+id/nav_history"
+        android:icon="@drawable/ic_history"
+        android:title="紀錄" />
+
+    <!-- 新增：圖表（圖示與設定相同） -->
+    <item
+        android:id="@+id/nav_chart"
+        android:icon="@drawable/ic_settings"
+        android:title="圖表" />
+
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="設定" />
+</menu>
