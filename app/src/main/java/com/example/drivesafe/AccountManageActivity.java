@@ -1,70 +1,55 @@
 package com.example.drivesafe;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class AccountManageActivity extends AppCompatActivity {
 
-    private EditText etUsername, etPassword, etConfirmPassword;
-    private Button btnSave;
+    private TextInputEditText etUsername, etPassword, etConfirmPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_account_manage);
+        setContentView(R.layout.activity_account_manage); // 你的帳號管理 XML
 
-        Toolbar toolbar = findViewById(R.id.accountToolbar);
+        MaterialToolbar toolbar = findViewById(R.id.accountToolbar);
         setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+        if (toolbar != null) toolbar.setNavigationOnClickListener(v -> finish());
 
-        etUsername = findViewById(R.id.etUsername);
-        etPassword = findViewById(R.id.etPassword);
+        etUsername        = findViewById(R.id.etUsername);
+        etPassword        = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
-        btnSave = findViewById(R.id.btnSaveAccount);
+        MaterialButton btnSave = findViewById(R.id.btnSaveAccount);
 
-        SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-        etUsername.setText(prefs.getString("username", ""));
+        // 載入目前帳號至畫面
+        etUsername.setText(AuthStore.getUser(this));
+        etPassword.setText(AuthStore.getPass(this));
+        etConfirmPassword.setText(AuthStore.getPass(this));
 
         btnSave.setOnClickListener(v -> {
-            String username = etUsername.getText().toString().trim();
-            String password = etPassword.getText().toString().trim();
-            String confirm = etConfirmPassword.getText().toString().trim();
+            String user = text(etUsername);
+            String pass = text(etPassword);
+            String pass2= text(etConfirmPassword);
 
-            if (TextUtils.isEmpty(username) || TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "帳號與密碼不能為空", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (!password.equals(confirm)) {
-                Toast.makeText(this, "密碼與確認密碼不一致", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            if (TextUtils.isEmpty(user)) { toast("請輸入帳號"); return; }
+            if (TextUtils.isEmpty(pass)) { toast("請輸入新密碼"); return; }
+            if (!pass.equals(pass2))    { toast("兩次密碼不一致"); return; }
 
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("username", username);
-            editor.putString("password", password);
-            editor.apply();
-
-            Toast.makeText(this, "帳號密碼已更新", Toast.LENGTH_SHORT).show();
-            finish();
+            AuthStore.save(this, user, pass);
+            toast("已儲存。下次登入請用新的帳密");
+            finish(); // 回到設定頁
         });
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    private String text(TextInputEditText et) {
+        return et != null && et.getText() != null ? et.getText().toString().trim() : "";
     }
+    private void toast(String s) { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }
 }

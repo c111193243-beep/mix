@@ -4,7 +4,7 @@
 
     <!-- 相機權限 -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- （可選，下方註解說明）預 Android 10 匯出圖片需要寫入外部儲存 -->
+    <!-- （可選）預 Android 10 匯出圖片需要寫入外部儲存 -->
     <!-- <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" /> -->
 
     <!-- 相機硬體特徵（不強制） -->
@@ -23,26 +23,7 @@
         android:theme="@style/Theme.Drivesafe"
         tools:targetApi="31">
 
-        <activity android:name=".AccountManageActivity" android:exported="false" />
-        <activity android:name=".ForgotPasswordActivity" android:exported="false" />
-        <activity android:name=".SettingsActivity" android:exported="false" />
-        <activity android:name=".ProfileActivity" android:exported="false" />
-        <activity android:name=".HistoryActivity" android:exported="false" />
-
-        <!-- 圖表頁：指定上一層是 MainActivity，系統 Up/返回會正確回 Main -->
-        <activity
-            android:name=".ChartActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity">
-            <!-- 兼容舊版 Support 的 Up Navigation（保險） -->
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
-        </activity>
-
-        <activity android:name=".RegisterActivity" android:exported="false" />
-
-        <!-- 啟動頁：LoginActivity -->
+        <!-- 啟動頁：LoginActivity（唯一 exported=true + LAUNCHER） -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -52,7 +33,90 @@
             </intent-filter>
         </activity>
 
-        <!-- 登入後進入 -->
-        <activity android:name=".MainActivity" android:exported="false" />
+        <!-- 登入後主頁 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <!-- 設定頁（從 Main 進來，Up 回 Main） -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <!-- 個人資料頁（從 Settings 進來，Up 回 Settings） -->
+        <activity
+            android:name=".ProfileActivity"
+            android:exported="false"
+            android:parentActivityName=".SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SettingsActivity" />
+        </activity>
+
+        <!-- 編輯個人資料頁（從 Profile 進來，Up 回 Profile） -->
+        <activity
+            android:name=".EditProfileActivity"
+            android:exported="false"
+            android:parentActivityName=".ProfileActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ProfileActivity" />
+        </activity>
+
+        <!-- 帳號管理（從 Settings 進來，Up 回 Settings） -->
+        <activity
+            android:name=".AccountManageActivity"
+            android:exported="false"
+            android:parentActivityName=".SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SettingsActivity" />
+        </activity>
+
+        <!-- 忘記密碼（通常從 Login 進來，Up 回 Login） -->
+        <activity
+            android:name=".ForgotPasswordActivity"
+            android:exported="false"
+            android:parentActivityName=".LoginActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".LoginActivity" />
+        </activity>
+
+        <!-- 歷史紀錄（從 Main 進來，Up 回 Main） -->
+        <activity
+            android:name=".HistoryActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <!-- 圖表頁（從 Main 進來，Up 回 Main） -->
+        <activity
+            android:name=".ChartActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+
+        <!-- 註冊頁（通常從 Login 進來，Up 回 Login） -->
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false"
+            android:parentActivityName=".LoginActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".LoginActivity" />
+        </activity>
+
     </application>
 </manifest>

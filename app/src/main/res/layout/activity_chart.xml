@@ -14,12 +14,9 @@
         android:background="@color/metalBackground"
         android:elevation="0dp"
         app:navigationIcon="@drawable/ic_arrow_back"
-        app:navigationIconTint="@color/textDark"
         app:title="疲勞指數圖表"
         app:titleCentered="true"
-        app:titleTextColor="@color/textDark"
-        app:contentInsetStartWithNavigation="0dp"
-        app:popupTheme="@style/ThemeOverlay.MaterialComponents.Light" />
+        app:titleTextColor="@color/textDark" />
 
     <!-- 內容區 -->
     <androidx.core.widget.NestedScrollView
@@ -33,10 +30,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:dividerPadding="0dp">
+            android:orientation="vertical">
 
-            <!-- 範圍切換 -->
+            <!-- 日期選擇 -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -47,67 +43,32 @@
                 app:strokeColor="@color/inputStrokeGray"
                 app:strokeWidth="1dp">
 
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/chipGroupRange"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="12dp"
-                    app:singleSelection="true"
-                    app:selectionRequired="true"
-                    app:chipSpacingHorizontal="8dp">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_1w"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                    <TextView
+                        android:id="@+id/tvSelectedDate"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="近 1 週"
-                        android:textColor="@color/textDark"
-                        app:chipBackgroundColor="@color/white"
-                        app:chipStrokeColor="@color/inputStrokeGray"
-                        app:chipStrokeWidth="1dp"
-                        app:rippleColor="@color/silverGray"
-                        app:checkedIconVisible="false"
-                        android:checked="true"/>
+                        android:text="當日：—"
+                        android:textColor="@color/textLight"
+                        android:textSize="12sp" />
 
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_1m"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPickDate"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="近 1 月"
-                        android:textColor="@color/textDark"
-                        app:chipBackgroundColor="@color/white"
-                        app:chipStrokeColor="@color/inputStrokeGray"
-                        app:chipStrokeWidth="1dp"
-                        app:rippleColor="@color/silverGray"
-                        app:checkedIconVisible="false"/>
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chip_3m"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="近 3 月"
-                        android:textColor="@color/textDark"
-                        app:chipBackgroundColor="@color/white"
-                        app:chipStrokeColor="@color/inputStrokeGray"
-                        app:chipStrokeWidth="1dp"
-                        app:rippleColor="@color/silverGray"
-                        app:checkedIconVisible="false"/>
-                </com.google.android.material.chip.ChipGroup>
+                        android:layout_marginTop="8dp"
+                        android:text="選擇日期"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:backgroundTint="@color/titaniumBlueGray"
+                        app:cornerRadius="16dp" />
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <!-- 當日顯示 -->
-            <TextView
-                android:id="@+id/tvSelectedDate"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="當日：—"
-                android:textColor="@color/textLight"
-                android:textSize="12sp"
-                android:visibility="gone"/>
 
             <!-- 圖表卡片 -->
             <com.google.android.material.card.MaterialCardView
@@ -130,7 +91,7 @@
                         android:id="@+id/tvChartTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="疲勞指數 (1–10)"
+                        android:text="疲勞指數（今天）"
                         android:textColor="@color/textDark"
                         android:textSize="16sp"
                         android:textStyle="bold"/>
@@ -235,7 +196,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 匯出/分享 -->
+            <!-- 匯出 / 分享 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

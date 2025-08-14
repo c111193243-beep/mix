@@ -20,9 +20,9 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings); // 對應你提供的 XML
+        setContentView(R.layout.activity_settings);
 
-        // Toolbar（使用 MaterialToolbar，提供返回）
+        // Toolbar 返回鍵
         MaterialToolbar toolbar = findViewById(R.id.settingsToolbar);
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
@@ -37,7 +37,7 @@ public class SettingsActivity extends AppCompatActivity {
             ).show();
         });
 
-        // 個人資料卡片 → 開 ProfileActivity（新增）
+        // 個人資料
         MaterialCardView cardProfile = findViewById(R.id.cardProfile);
         if (cardProfile != null) {
             cardProfile.setOnClickListener(v ->
@@ -45,7 +45,7 @@ public class SettingsActivity extends AppCompatActivity {
             );
         }
 
-        // 帳號管理卡片 → 開 AccountManageActivity（保留）
+        // 帳號管理
         MaterialCardView cardAccountManage = findViewById(R.id.cardAccountManage);
         if (cardAccountManage != null) {
             cardAccountManage.setOnClickListener(v ->
@@ -53,15 +53,14 @@ public class SettingsActivity extends AppCompatActivity {
             );
         }
 
-        // 登出按鈕 → 回登入頁並清掉返回堆疊（保留）
+        // 登出
         MaterialButton btnLogout = findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
-            finishAffinity(); // 結束所有 Activity，避免返回又回來
+            finishAffinity();
         });
     }
 
-    // 若你仍想支援 ActionBar 的返回鍵（雙保險），保留這段也無妨
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {

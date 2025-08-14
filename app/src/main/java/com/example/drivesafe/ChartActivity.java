@@ -11,8 +11,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.DatePicker;
 import android.widget.TextView;
@@ -33,8 +31,6 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.chip.Chip;
-import com.google.android.material.chip.ChipGroup;
 
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
@@ -45,16 +41,11 @@ import java.util.Locale;
 
 public class ChartActivity extends AppCompatActivity {
 
-    // 自訂選單ID（不靠 R.id）
-    private static final int ID_PICK_DATE = 10001;
-
     // UI
     private MaterialToolbar toolbar;
-    private ChipGroup chipGroupRange;
-    private Chip chip1w, chip1m, chip3m;
+    private MaterialButton btnPickDate, btnExport, btnShare;
     private LineChart lineChart;
     private TextView tvAvg, tvMax, tvMin, tvEmptyHint, tvSelectedDate;
-    private MaterialButton btnExport, btnShare;
 
     // Colors
     @ColorInt private int colorLine;
@@ -65,7 +56,6 @@ public class ChartActivity extends AppCompatActivity {
     @ColorInt private int colorHighlight;
 
     // Formats
-    private final SimpleDateFormat dayFmt  = new SimpleDateFormat("MM/dd", Locale.getDefault());
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
     private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
 
@@ -78,37 +68,22 @@ public class ChartActivity extends AppCompatActivity {
         bindColors();
         setupToolbar();
         setupChartAppearance();
-        setupChips();
         setupButtons();
 
-        // 預設載入 1 週
-        setDataForRangeDays(7);
-
-        // 若是從外部帶日期進來，可直接顯示當天（可選）
-        if (getIntent() != null && getIntent().hasExtra("year")) {
-            setDataForDate(
-                    getIntent().getIntExtra("year", 1970),
-                    getIntent().getIntExtra("month", 0),
-                    getIntent().getIntExtra("day", 1)
-            );
-        }
+        // 預設顯示「今天」
+        Calendar today = Calendar.getInstance();
+        setDataForDate(today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
     }
 
     private void bindViews() {
         toolbar        = findViewById(R.id.chartToolbar);
-        chipGroupRange = findViewById(R.id.chipGroupRange);
-        chip1w         = findViewById(R.id.chip_1w);
-        chip1m         = findViewById(R.id.chip_1m);
-        chip3m         = findViewById(R.id.chip_3m);
-
+        btnPickDate    = findViewById(R.id.btnPickDate);
         lineChart      = findViewById(R.id.lineChart);
-
         tvAvg          = findViewById(R.id.tvAvg);
         tvMax          = findViewById(R.id.tvMax);
         tvMin          = findViewById(R.id.tvMin);
         tvEmptyHint    = findViewById(R.id.tvEmptyHint);
         tvSelectedDate = findViewById(R.id.tvSelectedDate);
-
         btnExport      = findViewById(R.id.btnExport);
         btnShare       = findViewById(R.id.btnShare);
     }
@@ -122,37 +97,9 @@ public class ChartActivity extends AppCompatActivity {
         colorHighlight  = getColorCompat(this, R.color.accentRed);
     }
 
-    /** 只負責把 Toolbar 設成 ActionBar + 返回鍵 */
     private void setupToolbar() {
         setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // 顯示左上返回
-        }
         toolbar.setNavigationOnClickListener(v -> finish());
-        // 不在這裡加 menu；改由 onCreateOptionsMenu 負責
-    }
-
-    /** 在這裡建立右上角「選日期」按鈕（不需要任何 menu_chart.xml） */
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem pick = menu.add(0, ID_PICK_DATE, 0, "選日期");
-        pick.setIcon(android.R.drawable.ic_menu_my_calendar); // 系統日曆圖示
-        pick.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
-        return true;
-    }
-
-    /** 處理返回鍵與「選日期」點擊 */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == android.R.id.home) {
-            finish();
-            return true;
-        } else if (id == ID_PICK_DATE) {
-            openDatePicker();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void setupChartAppearance() {
@@ -172,6 +119,7 @@ public class ChartActivity extends AppCompatActivity {
         Legend legend = lineChart.getLegend();
         legend.setEnabled(false);
 
+        // X 軸樣式（當日用 HH:mm）
         XAxis x = lineChart.getXAxis();
         x.setPosition(XAxis.XAxisPosition.BOTTOM);
         x.setTextColor(colorTextDark);
@@ -180,7 +128,9 @@ public class ChartActivity extends AppCompatActivity {
         x.setDrawGridLines(true);
         x.setGridColor(colorGrid);
         x.setGridDashedLine(new DashPathEffect(new float[]{6f, 6f}, 0));
+        setXAxisForDay(); // 當日模式
 
+        // Y 軸
         YAxis yL = lineChart.getAxisLeft();
         yL.setAxisMinimum(0f);
         yL.setAxisMaximum(10f);
@@ -192,19 +142,6 @@ public class ChartActivity extends AppCompatActivity {
         yL.setGridColor(colorGrid);
         yL.setGridDashedLine(new DashPathEffect(new float[]{6f, 6f}, 0));
         lineChart.getAxisRight().setEnabled(false);
-    }
-
-    /** 週/月/季模式：X 軸顯示 MM/dd */
-    private void setXAxisForRange() {
-        XAxis x = lineChart.getXAxis();
-        x.setGranularity(24f * 60f * 60f * 1000f); // 天
-        x.setValueFormatter(new ValueFormatter() {
-            @Override public String getFormattedValue(float value) {
-                Calendar c = Calendar.getInstance();
-                c.setTimeInMillis((long) value);
-                return dayFmt.format(c.getTime());
-            }
-        });
     }
 
     /** 當日模式：X 軸顯示 HH:mm */
@@ -220,71 +157,13 @@ public class ChartActivity extends AppCompatActivity {
         });
     }
 
-    private void setupChips() {
-        chipGroupRange.setSingleSelection(true);
-        chipGroupRange.setOnCheckedStateChangeListener((group, list) -> {
-            if (list == null || list.isEmpty()) return;
-            int id = list.get(0);
-            // 切回範圍模式 → 隱藏「當日」標籤
-            if (tvSelectedDate != null) tvSelectedDate.setVisibility(View.GONE);
-            if (id == R.id.chip_1w) setDataForRangeDays(7);
-            else if (id == R.id.chip_1m) setDataForRangeDays(30);
-            else if (id == R.id.chip_3m) setDataForRangeDays(90);
-        });
-    }
-
     private void setupButtons() {
+        btnPickDate.setOnClickListener(v -> openDatePicker());
         btnExport.setOnClickListener(v -> exportChartImage());
         btnShare.setOnClickListener(v -> shareChartImage());
     }
 
-    /* ===== 範圍資料 ===== */
-
-    private void setDataForRangeDays(int days) {
-        setXAxisForRange();
-        List<Entry> entries = loadFatigueEntries(days);
-
-        if (entries == null || entries.isEmpty()) {
-            showEmpty(true);
-            lineChart.clear();
-            tvAvg.setText("—");
-            tvMax.setText("—");
-            tvMin.setText("—");
-            return;
-        }
-
-        showEmpty(false);
-        LineDataSet ds = new LineDataSet(entries, "疲勞指數");
-        styleDataSet(ds);
-        LineData data = new LineData(ds);
-        data.setDrawValues(false);
-        lineChart.setData(data);
-        lineChart.animateX(500);
-        lineChart.invalidate();
-
-        computeAndBindStats(entries);
-    }
-
-    /** 示範範圍資料（請換成你的資料來源） */
-    private List<Entry> loadFatigueEntries(int days) {
-        List<Entry> list = new ArrayList<>();
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 9);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-
-        for (int i = days - 1; i >= 0; i--) {
-            Calendar c = (Calendar) cal.clone();
-            c.add(Calendar.DAY_OF_YEAR, -i);
-            float v = (float) (3.5 + Math.sin(i * 0.35f) * 2.0 + Math.random() * 2.5);
-            v = Math.max(1f, Math.min(10f, v));
-            list.add(new Entry(c.getTimeInMillis(), v));
-        }
-        return list;
-    }
-
-    /* ===== 當日資料 ===== */
+    /* ===== 日期選擇 & 當日資料 ===== */
 
     private void openDatePicker() {
         final Calendar cal = Calendar.getInstance();
@@ -299,9 +178,6 @@ public class ChartActivity extends AppCompatActivity {
 
     /** 載入某一日的資料並重繪（X 軸 HH:mm） */
     private void setDataForDate(int year, int month /*0-11*/, int day) {
-        // 清掉範圍 chips 的選取狀態
-        if (chipGroupRange != null) chipGroupRange.clearCheck();
-
         // 計算當天起訖毫秒
         Calendar start = Calendar.getInstance();
         start.set(year, month, day, 0, 0, 0);
@@ -315,11 +191,10 @@ public class ChartActivity extends AppCompatActivity {
         end.set(Calendar.MILLISECOND, 999);
         long endMs = end.getTimeInMillis();
 
-        // 撈資料（這裡先用假資料：每 30 分鐘一筆）
+        // 這裡先用假資料：每 30 分鐘一筆；之後換成你 Room/Firestore 的真資料
         List<Entry> entries = loadDayEntries(startMs, endMs);
 
-        // X 軸改成 HH:mm
-        setXAxisForDay();
+        setXAxisForDay(); // 確保 X 軸用 HH:mm
 
         if (entries == null || entries.isEmpty()) {
             showEmpty(true);
@@ -342,15 +217,17 @@ public class ChartActivity extends AppCompatActivity {
         // 顯示所選日期
         if (tvSelectedDate != null) {
             tvSelectedDate.setText("當日：" + dateFmt.format(start.getTime()));
-            tvSelectedDate.setVisibility(View.VISIBLE);
         }
         TextView title = findViewById(R.id.tvChartTitle);
         if (title != null) {
             title.setText(String.format(Locale.getDefault(), "疲勞指數（%s）", dateFmt.format(start.getTime())));
         }
+        if (btnPickDate != null) {
+            btnPickDate.setText(dateFmt.format(start.getTime()));
+        }
     }
 
-    /** 當日假資料：每 30 分鐘生成一筆 */
+    /** 當日假資料：每 30 分鐘生成一筆（1~10）*/
     private List<Entry> loadDayEntries(long startMs, long endMs) {
         List<Entry> list = new ArrayList<>();
         long step = 30L * 60L * 1000L; // 30 分鐘

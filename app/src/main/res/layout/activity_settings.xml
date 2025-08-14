@@ -30,7 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- 個人資料（新增：可點擊卡片） -->
+            <!-- 個人資料（新增） -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardProfile"
                 android:layout_width="match_parent"
@@ -66,7 +66,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 帳號管理（保留：可點擊區塊） -->
+            <!-- 帳號管理 -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardAccountManage"
                 android:layout_width="match_parent"
