@@ -1,6 +1,5 @@
 package com.example.drivesafe;
 
-import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -15,12 +14,20 @@ import android.view.View;
 import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.DatePickerDialog;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.example.drivesafe.db.FatigueRecord;
+import com.example.drivesafe.db.AppDatabase;
+import com.example.drivesafe.db.FatigueDao;
+import com.example.drivesafe.net.ApiClient;
+import com.example.drivesafe.net.ApiService;
+import com.example.drivesafe.net.FatigueDto;
+import com.example.drivesafe.net.TokenStore;   // ★ 取出 token 用
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
@@ -39,7 +46,18 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ChartActivity extends AppCompatActivity {
+
+    // 原本硬編 BASE_URL → 改用 BuildConfig.BASE_URL
+    // private static final String BASE_URL = "http://10.0.2.2:8005/";
+    private static final String FALLBACK_USER_ID  = "00000000-0000-0000-0000-000000000001";
+
+    // Room
+    private AppDatabase db;
 
     // UI
     private MaterialToolbar toolbar;
@@ -59,10 +77,26 @@ public class ChartActivity extends AppCompatActivity {
     private final SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
     private final SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy/MM/dd", Locale.getDefault());
 
+    // 目前使用者（從登入時存的 prefs 讀取）
+    private String currentUserId;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chart);
+
+        db = AppDatabase.getInstance(getApplicationContext());
+
+        // ★ 取得 userId：先從 Intent，其次從 SharedPreferences，最後用備援常數
+        String intentUserId = getIntent().getStringExtra("user_id");
+        if (intentUserId != null && !intentUserId.trim().isEmpty()) {
+            currentUserId = intentUserId.trim();
+        } else {
+            final String PREF_NAME = "login_prefs";
+            final String KEY_USER_ID = "user_id";
+            currentUserId = getSharedPreferences(PREF_NAME, MODE_PRIVATE)
+                    .getString(KEY_USER_ID, FALLBACK_USER_ID);
+        }
 
         bindViews();
         bindColors();
@@ -70,7 +104,7 @@ public class ChartActivity extends AppCompatActivity {
         setupChartAppearance();
         setupButtons();
 
-        // 預設顯示「今天」
+        // 預設今天
         Calendar today = Calendar.getInstance();
         setDataForDate(today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH));
     }
@@ -119,7 +153,7 @@ public class ChartActivity extends AppCompatActivity {
         Legend legend = lineChart.getLegend();
         legend.setEnabled(false);
 
-        // X 軸樣式（當日用 HH:mm）
+        // X 軸
         XAxis x = lineChart.getXAxis();
         x.setPosition(XAxis.XAxisPosition.BOTTOM);
         x.setTextColor(colorTextDark);
@@ -128,7 +162,6 @@ public class ChartActivity extends AppCompatActivity {
         x.setDrawGridLines(true);
         x.setGridColor(colorGrid);
         x.setGridDashedLine(new DashPathEffect(new float[]{6f, 6f}, 0));
-        setXAxisForDay(); // 當日模式
 
         // Y 軸
         YAxis yL = lineChart.getAxisLeft();
@@ -144,14 +177,15 @@ public class ChartActivity extends AppCompatActivity {
         lineChart.getAxisRight().setEnabled(false);
     }
 
-    /** 當日模式：X 軸顯示 HH:mm */
-    private void setXAxisForDay() {
+    /** X 軸顯示 HH:mm（x 值用「距當天 00:00 的分鐘數」） */
+    private void setXAxisForDay(final long startOfDayMs) {
         XAxis x = lineChart.getXAxis();
-        x.setGranularity(15f * 60f * 1000f); // 15 分鐘
+        x.setGranularity(15f); // 15 分鐘一格
         x.setValueFormatter(new ValueFormatter() {
             @Override public String getFormattedValue(float value) {
+                long tMs = startOfDayMs + (long) (value * 60_000L);
                 Calendar c = Calendar.getInstance();
-                c.setTimeInMillis((long) value);
+                c.setTimeInMillis(tMs);
                 return timeFmt.format(c.getTime());
             }
         });
@@ -163,7 +197,7 @@ public class ChartActivity extends AppCompatActivity {
         btnShare.setOnClickListener(v -> shareChartImage());
     }
 
-    /* ===== 日期選擇 & 當日資料 ===== */
+    /* ===== 日期選擇 & 資料載入 ===== */
 
     private void openDatePicker() {
         final Calendar cal = Calendar.getInstance();
@@ -176,45 +210,26 @@ public class ChartActivity extends AppCompatActivity {
         ).show();
     }
 
-    /** 載入某一日的資料並重繪（X 軸 HH:mm） */
+    /** 先查本機；若空就向後端抓，寫回本機後再畫 */
     private void setDataForDate(int year, int month /*0-11*/, int day) {
-        // 計算當天起訖毫秒
         Calendar start = Calendar.getInstance();
         start.set(year, month, day, 0, 0, 0);
         start.set(Calendar.MILLISECOND, 0);
-        long startMs = start.getTimeInMillis();
+        final long startMs = start.getTimeInMillis();
 
         Calendar end = (Calendar) start.clone();
         end.set(Calendar.HOUR_OF_DAY, 23);
         end.set(Calendar.MINUTE, 59);
         end.set(Calendar.SECOND, 59);
         end.set(Calendar.MILLISECOND, 999);
-        long endMs = end.getTimeInMillis();
+        final long endMs = end.getTimeInMillis();
 
-        // 這裡先用假資料：每 30 分鐘一筆；之後換成你 Room/Firestore 的真資料
-        List<Entry> entries = loadDayEntries(startMs, endMs);
+        setXAxisForDay(startMs);
 
-        setXAxisForDay(); // 確保 X 軸用 HH:mm
+        // 本機查詢 → 空則拉網路
+        queryDbAndRender(startMs, endMs, startMs, /*fallbackFetch*/true);
 
-        if (entries == null || entries.isEmpty()) {
-            showEmpty(true);
-            lineChart.clear();
-            tvAvg.setText("—");
-            tvMax.setText("—");
-            tvMin.setText("—");
-        } else {
-            showEmpty(false);
-            LineDataSet ds = new LineDataSet(entries, "疲勞指數");
-            styleDataSet(ds);
-            LineData data = new LineData(ds);
-            data.setDrawValues(false);
-            lineChart.setData(data);
-            lineChart.animateX(400);
-            lineChart.invalidate();
-            computeAndBindStats(entries);
-        }
-
-        // 顯示所選日期
+        // UI 顯示
         if (tvSelectedDate != null) {
             tvSelectedDate.setText("當日：" + dateFmt.format(start.getTime()));
         }
@@ -227,19 +242,112 @@ public class ChartActivity extends AppCompatActivity {
         }
     }
 
-    /** 當日假資料：每 30 分鐘生成一筆（1~10）*/
-    private List<Entry> loadDayEntries(long startMs, long endMs) {
-        List<Entry> list = new ArrayList<>();
-        long step = 30L * 60L * 1000L; // 30 分鐘
-        for (long t = startMs + step; t <= endMs - step; t += step) {
-            float v = (float) (3.0 + Math.sin((t - startMs) / 2.5e6) * 2.0 + Math.random() * 2.0);
-            if (v < 1f) v = 1f; if (v > 10f) v = 10f;
-            list.add(new Entry(t, v));
-        }
-        return list;
+    private void queryDbAndRender(long startMs, long endMs, long startOfDayMs, boolean fallbackFetch) {
+        new Thread(() -> {
+            FatigueDao dao = db.fatigueDao();
+            List<FatigueRecord> records = dao.getByTimeRange(startMs, endMs);
+
+            final List<Entry> entries = toEntries(records, startOfDayMs);
+
+            runOnUiThread(() -> {
+                if (entries.isEmpty()) {
+                    if (fallbackFetch) {
+                        fetchFromServerAndCacheThenRender(startMs, endMs, startOfDayMs);
+                    } else {
+                        showEmpty(true);
+                        lineChart.clear();
+                        bindStatsEmpty();
+                    }
+                } else {
+                    showEmpty(false);
+                    LineDataSet ds = new LineDataSet(entries, "疲勞指數");
+                    styleDataSet(ds);
+                    LineData data = new LineData(ds);
+                    data.setDrawValues(false);
+                    lineChart.setData(data);
+                    lineChart.animateX(400);
+                    lineChart.invalidate();
+                    computeAndBindStats(entries);
+                }
+            });
+        }).start();
     }
 
-    /* ===== DataSet 外觀 ===== */
+    /** 往後端 GET → 寫回 Room → 再從本機重畫 */
+    private void fetchFromServerAndCacheThenRender(long startMs, long endMs, long startOfDayMs) {
+        // ★ 1) 取得 ApiService（統一用 BuildConfig.BASE_URL）
+        ApiService api = ApiClient.get(BuildConfig.BASE_URL).create(ApiService.class);
+
+        // ★ 2) 組 Authorization 標頭（無 token 時傳 null 也可呼叫）
+        String token = new TokenStore(getApplicationContext()).get();
+        String authHeader = (token != null && !token.isEmpty()) ? ("Bearer " + token) : null;
+
+        // ★ 3) 使用現在的 getRecords 介面（bearerToken, userId, startMs, endMs）
+        final String userId = (currentUserId == null || currentUserId.trim().isEmpty())
+                ? FALLBACK_USER_ID : currentUserId;
+
+        Call<List<FatigueDto>> call = api.getRecords(authHeader, userId, startMs, endMs);
+
+        Toast.makeText(this, "正在從伺服器抓取資料…", Toast.LENGTH_SHORT).show();
+
+        call.enqueue(new Callback<List<FatigueDto>>() {
+            @Override public void onResponse(Call<List<FatigueDto>> call, Response<List<FatigueDto>> resp) {
+                if (!resp.isSuccessful() || resp.body() == null) {
+                    onFail("伺服器回應失敗（" + resp.code() + "）");
+                    return;
+                }
+                List<FatigueDto> list = resp.body();
+
+                new Thread(() -> {
+                    try {
+                        if (list != null && !list.isEmpty()) {
+                            List<FatigueRecord> toInsert = new ArrayList<>(list.size());
+                            for (FatigueDto d : list) {
+                                // 依你現有的 Entity API：以 timestamp_ms / score 建構，並寫入 server 狀態
+                                FatigueRecord r = new FatigueRecord(d.timestamp_ms, d.score);
+                                r.setServerId(d.id);
+                                r.setSynced(true);
+                                toInsert.add(r);
+                            }
+                            if (!toInsert.isEmpty()) {
+                                db.fatigueDao().insertAll(toInsert);
+                            }
+                        }
+                    } catch (Exception ignored) {}
+
+                    runOnUiThread(() -> queryDbAndRender(startMs, endMs, startOfDayMs, /*fallbackFetch*/false));
+                }).start();
+            }
+
+            @Override public void onFailure(Call<List<FatigueDto>> call, Throwable t) {
+                onFail("抓取失敗：" + t.getMessage());
+            }
+
+            private void onFail(String msg) {
+                runOnUiThread(() -> {
+                    showEmpty(true);
+                    lineChart.clear();
+                    bindStatsEmpty();
+                    Toast.makeText(ChartActivity.this, msg, Toast.LENGTH_SHORT).show();
+                });
+            }
+        });
+    }
+
+    /** 把資料轉成圖表點位：使用「有效時間」effectiveTime() */
+    private List<Entry> toEntries(List<FatigueRecord> records, long startOfDayMs) {
+        List<Entry> entries = new ArrayList<>();
+        if (records == null) return entries;
+        for (FatigueRecord r : records) {
+            long ts = r.effectiveTime();
+            if (ts <= 0) continue;
+            float minutesFromStart = (ts - startOfDayMs) / 60_000f;
+            entries.add(new Entry(minutesFromStart, r.getScore()));
+        }
+        return entries;
+    }
+
+    /* ===== DataSet 外觀 & 統計 ===== */
 
     private void styleDataSet(LineDataSet set) {
         set.setColor(colorLine);
@@ -249,17 +357,14 @@ public class ChartActivity extends AppCompatActivity {
         set.setCircleRadius(3.3f);
         set.setDrawCircleHole(false);
 
-        // 平滑曲線
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         set.setCubicIntensity(0.18f);
 
-        // 高亮
         set.setHighlightEnabled(true);
         set.setHighLightColor(colorHighlight);
         set.setHighlightLineWidth(1.2f);
         set.setDrawHorizontalHighlightIndicator(false);
 
-        // 陰影填充
         set.setDrawFilled(true);
         set.setFillDrawable(makeFillGradient());
     }
@@ -283,10 +388,16 @@ public class ChartActivity extends AppCompatActivity {
             if (v > max) max = v;
             if (v < min) min = v;
         }
-        float avg = sum / entries.size();
-        tvAvg.setText(String.format(Locale.getDefault(), "%.1f", avg));
-        tvMax.setText(String.format(Locale.getDefault(), "%.1f", max));
-        tvMin.setText(String.format(Locale.getDefault(), "%.1f", min));
+        float avg = entries.isEmpty() ? 0f : (sum / entries.size());
+        tvAvg.setText(entries.isEmpty() ? "—" : String.format(Locale.getDefault(), "%.1f", avg));
+        tvMax.setText(entries.isEmpty() ? "—" : String.format(Locale.getDefault(), "%.1f", max));
+        tvMin.setText(entries.isEmpty() ? "—" : String.format(Locale.getDefault(), "%.1f", min));
+    }
+
+    private void bindStatsEmpty() {
+        tvAvg.setText("—");
+        tvMax.setText("—");
+        tvMin.setText("—");
     }
 
     private void showEmpty(boolean show) {

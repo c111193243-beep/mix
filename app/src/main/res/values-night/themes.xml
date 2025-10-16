@@ -1,7 +1,22 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.Drivesafe" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+
+    <!-- 固定淺色主題，避免自動夜間模式 -->
+    <style name="Theme.DriveSafe" parent="Theme.Material3.Light.NoActionBar">
+        <!-- 主色 -->
+        <item name="colorPrimary">@color/primaryBlue</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- 背景與文字 -->
+        <item name="android:windowBackground">@color/bgLightGray</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/textDark</item>
+
+        <!-- 次色調 (按鈕 / Chip / Toolbar) -->
+        <item name="colorSecondary">@color/titaniumBlueGray</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <!-- 強制禁止夜間模式轉換 -->
+        <item name="android:forceDarkAllowed" tools:targetApi="29">false</item>
     </style>
+
 </resources>

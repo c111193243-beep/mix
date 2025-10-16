@@ -25,7 +25,8 @@
         android:layout_marginTop="?attr/actionBarSize"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="16dp">
+        android:paddingBottom="16dp"
+        android:fillViewport="true">  <!-- ✅ 建議加入 -->
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -100,7 +101,9 @@
                         android:id="@+id/lineChart"
                         android:layout_width="match_parent"
                         android:layout_height="260dp"
-                        android:layout_marginTop="8dp"/>
+                        android:layout_marginTop="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
