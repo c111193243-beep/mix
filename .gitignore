@@ -1,17 +1,13 @@
-# Android / IntelliJ / Gradle
+﻿*.iml
 .gradle/
-build/
-captures/
-.idea/
-*.iml
 local.properties
-
-# OS
+/.idea/
+/**/build/
+captures/
+.externalNativeBuild/
+.cxx/
 .DS_Store
-
-# Logs
-*.log
-
-# Keystore（若有）
+Thumbs.db
 *.jks
 *.keystore
+*.log

@@ -1,0 +1,58 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.patrick.detection'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 24
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // 與 AGP 8.x 對齊：JDK 17
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    // 基礎
+    implementation libs.core.ktx
+    implementation libs.appcompat
+
+    // CameraX（如果這個模組沒有直接用到，可以整段拿掉）
+    implementation libs.camerax.core
+    implementation libs.camerax.camera2
+    implementation libs.camerax.lifecycle
+    implementation libs.camerax.view
+
+    // 協程（MediaPipe 範例常用）
+    implementation libs.kotlinx.coroutines.android
+
+    // MediaPipe Tasks Vision（解掉 Unresolved reference: mediapipe）
+    implementation libs.mediapipe.tasks.vision
+
+    // 其他模組（避免循環相依，只引用 shared-core）
+    implementation project(':shared-core')
+    // ❌ 不要在這裡依賴 ':ui-components'，否則會造成循環依賴
+
+    // 測試
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

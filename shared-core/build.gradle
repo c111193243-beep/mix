@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    // 與程式碼 import 一致：com.patrick.sharedcore.BuildConfig
+    namespace 'com.patrick.sharedcore'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 24
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // 產生 BuildConfig（library 模組預設關閉，這裡開啟）
+    buildFeatures {
+        buildConfig true
+    }
+
+    // 與 AGP 8.x 對齊：JDK 17
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation libs.core.ktx
+    implementation libs.appcompat
+    implementation libs.lifecycle.runtime.ktx
+
+    // AsyncTaskManager.kt 需要的 WorkManager
+    implementation "androidx.work:work-runtime-ktx:2.9.0"
+
+    // 若有用到協程再開
+    // implementation libs.kotlinx.coroutines.core
+
+    testImplementation libs.junit
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+}

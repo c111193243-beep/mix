@@ -1,24 +1,30 @@
+// settings.gradle
+
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
-        mavenCentral()
+        // 讓 AGP / Kotlin 插件可被解析
         gradlePluginPortal()
+        google()
+        mavenCentral()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }
+        maven { url 'https://jitpack.io' } // 需要 MPAndroidChart 等才保留
     }
 }
 
 rootProject.name = "Drivesafe"
-include ':app'
+
+// 專案模組
+include(":app")
+include(":shared-core", ":camera-input", ":detection-logic", ":ui-components")
+
+// ⚠️ 只有在真的有 detection 子模組資料夾且裡面有 build.gradle 才啟用：
+// include(":detection")
+// 若 detection 不在根目錄，可指定路徑：
+// project(":detection").projectDir = file("detection")

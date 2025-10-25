@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/metalBackground">
 
-    <!-- Toolbar（含：新增、全部、日期） -->
+    <!-- Toolbar（深灰標題＋圖示色） -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/adminToolbar"
         android:layout_width="match_parent"
@@ -14,7 +14,9 @@
         android:background="@color/metalBackground"
         app:title="管理員後台"
         app:titleCentered="true"
-        app:titleTextColor="@color/white" />
+        app:titleTextColor="@color/textDark"
+        app:navigationIconTint="@color/textLight"
+        app:subtitleTextColor="@color/textLight" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -25,7 +27,7 @@
         android:paddingEnd="16dp"
         android:paddingBottom="16dp">
 
-        <!-- 篩選列（顯示目前日期狀態 + 按鈕） -->
+        <!-- 篩選列 -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -85,7 +87,7 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- 統計卡（可快速看到筆數/平均） -->
+        <!-- 統計卡 -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -1,5 +1,7 @@
 [versions]
 agp = "8.10.1"
+kotlin = "1.9.22"
+coroutines = "1.8.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -7,8 +9,15 @@ appcompat = "1.7.1"
 material = "1.12.0"
 activity = "1.10.1"
 constraintlayout = "2.2.1"
+coreKtx = "1.13.1"
+lifecycle = "2.8.6"
+cameraxCore = "1.3.4"
+mediapipe-tasks = "0.10.14"      # ← 更新為可用版本
+composeBom = "2024.06.00"        # Compose BOM（適配 Kotlin 1.9.22）
+composeCompiler = "1.5.10"       # 可選：Compose 編譯器版本鍵（Kotlin 1.9.22 對 1.5.10）
 
 [libraries]
+# 基本
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -17,6 +26,46 @@ material = { group = "com.google.android.material", name = "material", version.r
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 
+# 相容別名
+androidx-test-ext = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+espresso = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+
+# Kotlin / 協程
+kotlin-stdlib  = { module = "org.jetbrains.kotlin:kotlin-stdlib",  version.ref = "kotlin" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+kotlin-bom     = { module = "org.jetbrains.kotlin:kotlin-bom",     version.ref = "kotlin" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-core    = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core",    version.ref = "coroutines" }
+
+# Core KTX / Lifecycle
+core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+lifecycle-runtime-ktx   = { module = "androidx.lifecycle:lifecycle-runtime-ktx",   version.ref = "lifecycle" }
+lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+lifecycle-viewmodel     = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
+
+# Compose（用 BOM：子項不寫版本）
+androidx-compose-bom        = { group = "androidx.compose",         name = "compose-bom",  version.ref = "composeBom" }
+androidx-compose-ui         = { group = "androidx.compose.ui",      name = "ui" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui",      name = "ui-tooling" }
+androidx-compose-runtime    = { group = "androidx.compose.runtime", name = "runtime" }
+androidx-compose-material3  = { group = "androidx.compose.material3", name = "material3" }
+
+# CameraX（不用 BOM，直接釘版）
+camerax-core      = { module = "androidx.camera:camera-core",      version.ref = "cameraxCore" }
+camerax-camera2   = { module = "androidx.camera:camera-camera2",   version.ref = "cameraxCore" }
+camerax-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraxCore" }
+camerax-view      = { module = "androidx.camera:camera-view",      version.ref = "cameraxCore" }
+
+# 也提供無版本別名（若有模組用 libs.androidx.camera.*）
+androidx-camera-core      = { module = "androidx.camera:camera-core" }
+androidx-camera-camera2   = { module = "androidx.camera:camera-camera2" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle" }
+androidx-camera-view      = { module = "androidx.camera:camera-view" }
+
+# MediaPipe
+mediapipe-tasks-vision = { group = "com.google.mediapipe", name = "tasks-vision", version.ref = "mediapipe-tasks" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
+android-library     = { id = "com.android.library",     version.ref = "agp" }
+kotlin-android      = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

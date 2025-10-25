@@ -7,7 +7,7 @@
     android:background="@color/metalBackground"
     android:padding="24dp">
 
-    <!-- App 標題 -->
+    <!-- App 標題（改成深灰） -->
     <TextView
         android:id="@+id/tvAppTitle"
         android:layout_width="wrap_content"
@@ -16,14 +16,14 @@
         android:textSize="26sp"
         android:textStyle="bold"
         android:fontFamily="sans-serif-medium"
-        android:textColor="@color/white"
+        android:textColor="@color/textDark"
         android:letterSpacing="0.05"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="64dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Email 欄位 -->
+    <!-- Email 欄位（文字/Hint 改深灰） -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/emailLayout"
         android:layout_width="0dp"
@@ -32,6 +32,7 @@
         app:boxBackgroundMode="outline"
         app:boxStrokeColor="@color/silverGray"
         app:endIconMode="clear_text"
+        app:hintTextColor="@color/textLight"
         android:layout_marginTop="32dp"
         app:layout_constraintTop_toBottomOf="@id/tvAppTitle"
         app:layout_constraintStart_toStartOf="parent"
@@ -42,11 +43,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textEmailAddress"
-            android:textColor="@color/white"
-            android:textColorHint="@color/grayHint"/>
+            android:textColor="@color/textDark"
+            android:textColorHint="@color/textLight"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- 密碼欄位 -->
+    <!-- 密碼欄位（文字/Hint、眼睛圖示 改深灰） -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/passwordLayout"
         android:layout_width="0dp"
@@ -55,6 +56,8 @@
         app:boxBackgroundMode="outline"
         app:boxStrokeColor="@color/silverGray"
         app:endIconMode="password_toggle"
+        app:endIconTint="@color/textLight"
+        app:hintTextColor="@color/textLight"
         android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/emailLayout"
         app:layout_constraintStart_toStartOf="parent"
@@ -65,11 +68,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
-            android:textColor="@color/white"
-            android:textColorHint="@color/grayHint"/>
+            android:textColor="@color/textDark"
+            android:textColorHint="@color/textLight"/>
     </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- 記住帳號 -->
+    <!-- 記住帳號（維持原色；若也想加深可改成 @color/textLight） -->
     <CheckBox
         android:id="@+id/checkboxRemember"
         android:layout_width="wrap_content"
@@ -95,7 +98,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- ✅ 管理員登入卡片 -->
+    <!-- ✅ 管理員登入卡片（不變） -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardAdmin"
         android:layout_width="0dp"
@@ -150,7 +153,6 @@
                     android:textSize="12sp"/>
             </LinearLayout>
 
-            <!-- 用字元當箭頭，避免缺圖資源 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
