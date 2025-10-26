@@ -1,6 +1,6 @@
 [versions]
 agp = "8.10.1"
-kotlin = "1.9.22"
+kotlin = "1.9.24"              # ← 升級：配合 Compose Compiler 1.5.14
 coroutines = "1.8.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -12,9 +12,9 @@ constraintlayout = "2.2.1"
 coreKtx = "1.13.1"
 lifecycle = "2.8.6"
 cameraxCore = "1.3.4"
-mediapipe-tasks = "0.10.14"      # ← 更新為可用版本
-composeBom = "2024.06.00"        # Compose BOM（適配 Kotlin 1.9.22）
-composeCompiler = "1.5.10"       # 可選：Compose 編譯器版本鍵（Kotlin 1.9.22 對 1.5.10）
+mediapipe-tasks = "0.10.14"
+composeBom = "2024.06.00"
+composeCompiler = "1.5.14"     # ← 升級：與 Kotlin 1.9.24 相容
 
 [libraries]
 # 基本
@@ -50,7 +50,7 @@ androidx-compose-ui-tooling = { group = "androidx.compose.ui",      name = "ui-t
 androidx-compose-runtime    = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-compose-material3  = { group = "androidx.compose.material3", name = "material3" }
 
-# CameraX（不用 BOM，直接釘版）
+# CameraX
 camerax-core      = { module = "androidx.camera:camera-core",      version.ref = "cameraxCore" }
 camerax-camera2   = { module = "androidx.camera:camera-camera2",   version.ref = "cameraxCore" }
 camerax-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraxCore" }

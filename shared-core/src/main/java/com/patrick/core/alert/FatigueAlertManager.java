@@ -1,43 +1,57 @@
-package com.patrick.core.alert
+package com.patrick.core.alert;
 
-import android.content.Context
-import android.util.Log
-import com.patrick.core.FatigueDetectionResult
-import com.patrick.core.FatigueDialogCallback
-import com.patrick.core.FatigueUiCallback
+import android.content.Context;
+import android.util.Log;
 
-/**
- * 最小可用版的告警管理器：目前只做 logging，不顯示任何 UI 或音效。
- * 之後你要加對話框/聲音，只要在對應方法裡補上即可。
- */
-class FatigueAlertManager(private val context: Context) {
+import com.patrick.core.FatigueDetectionResult;
+import com.patrick.core.FatigueDialogCallback;
+import com.patrick.core.FatigueUiCallback;
 
-    private var dialogCallback: FatigueDialogCallback? = null
-    private var uiCallback: FatigueUiCallback? = null
+public class FatigueAlertManager {
+    private static final String TAG = "FatigueAlertManager";
 
-    fun setDialogCallback(callback: FatigueDialogCallback) {
-        this.dialogCallback = callback
+    private final Context appContext;
+    private FatigueDialogCallback dialogCallback;
+    private FatigueUiCallback uiCallback;
+
+    public FatigueAlertManager(Context context) {
+        this.appContext = context.getApplicationContext();
     }
 
-    fun setUiCallback(callback: FatigueUiCallback) {
-        this.uiCallback = callback
+    public void setDialogCallback(FatigueDialogCallback callback) {
+        this.dialogCallback = callback;
+    }
+
+    public void setUiCallback(FatigueUiCallback callback) {
+        this.uiCallback = callback;
     }
 
     /**
-     * 接到疲勞事件時的處理（目前只 log；保留與 FatigueDetectionManager 相容的介面）
+     * 接到疲勞事件時的處理（目前只 log；介面與 FatigueDetectionManager 相容）
      */
-    fun handleFatigueDetection(result: FatigueDetectionResult) {
-        Log.d("FatigueAlertManager", "handleFatigueDetection: level=${result.fatigueLevel}, events=${result.events.size}")
-        // 這裡未彈窗；若要顯示對話框或播聲音，可在這裡呼叫 uiCallback.* 或 dialogCallback.*
-        // 例如：uiCallback?.setWarningDialogActive(true)
+    public void handleFatigueDetection(FatigueDetectionResult result) {
+        String levelStr;
+        try {
+            levelStr = String.valueOf(result.getFatigueLevel());
+        } catch (Throwable t) {
+            levelStr = "UNKNOWN";
+        }
+        int eventCount = 0;
+        try {
+            eventCount = (result.getEvents() == null) ? 0 : result.getEvents().size();
+        } catch (Throwable ignore) {}
+
+        Log.d(TAG, "handleFatigueDetection: level=" + levelStr + ", events=" + eventCount);
+
+        // 需要 UI/聲音時，再在這裡呼叫 callback（依你的介面決定）
+        // if (uiCallback != null) uiCallback.setWarningDialogActive(true);
     }
 
     /**
      * 停止所有告警（聲音/震動/對話框等）；目前只 log。
      */
-    fun stopAllAlerts() {
-        Log.d("FatigueAlertManager", "stopAllAlerts")
-        // 若未來有聲音或對話框，在這裡關閉它們
-        // uiCallback?.setWarningDialogActive(false)
+    public void stopAllAlerts() {
+        Log.d(TAG, "stopAllAlerts");
+        // if (uiCallback != null) uiCallback.setWarningDialogActive(false);
     }
 }

@@ -1,5 +1,7 @@
 package com.example.drivesafe.ui;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,9 +10,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.drivesafe.db.FatigueRecord;
-
 import com.example.drivesafe.R;
+import com.example.drivesafe.db.FatigueRecord;
+import com.google.android.material.chip.Chip;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/** 列表：疲勞記錄 */
+/** 列表：疲勞記錄（新版：分數＋等級＋同步 Chip） */
 public class FatigueAdapter extends RecyclerView.Adapter<FatigueAdapter.ViewHolder> {
 
     private final List<FatigueRecord> data = new ArrayList<>();
@@ -35,9 +37,7 @@ public class FatigueAdapter extends RecyclerView.Adapter<FatigueAdapter.ViewHold
     private OnItemClickListener clickListener;
     private OnItemLongClickListener longClickListener;
 
-    public FatigueAdapter() {
-        setHasStableIds(true);
-    }
+    public FatigueAdapter() { setHasStableIds(true); }
 
     public FatigueAdapter(@NonNull List<FatigueRecord> initial) {
         setHasStableIds(true);
@@ -94,15 +94,61 @@ public class FatigueAdapter extends RecyclerView.Adapter<FatigueAdapter.ViewHold
         FatigueRecord r = getItem(position);
         if (r == null) return;
 
-        h.tvScore.setText(String.format(Locale.getDefault(), "%.2f", r.getScore()));
+        // 分數：加上「分」單位（0~10 以一位小數顯示，否則整數）
+        final float score = r.getScore();
+        final boolean tenScale = score <= 10f; // 自動偵測 0~10 / 0~100
+        String scoreText = tenScale
+                ? String.format(Locale.getDefault(), "%.1f 分", score)
+                : String.format(Locale.getDefault(), "%.0f 分", score);
+        h.tvScore.setText(scoreText);
+
+        // 時間
         long t = r.effectiveTime();
         h.tvTime.setText((t > 0) ? timeFmt.format(new Date(t)) : "—");
-        h.tvMeta.setText(String.format(
-                Locale.getDefault(),
-                "ID %d • %s",
-                r.getId(),
-                r.isSynced() ? "Synced" : "Not synced"));
 
+        // 等級（顏色＋文字）
+        if (h.chipLevel != null) {
+            float danger = tenScale ? 7f : 70f;
+            float warn   = tenScale ? 3f : 30f;
+
+            String levelText;
+            int bg, fg;
+            if (score >= danger) {
+                levelText = "警示";
+                bg = Color.parseColor("#FFEBEE");   // 紅 50
+                fg = Color.parseColor("#B71C1C");   // 紅 900
+            } else if (score >= warn) {
+                levelText = "注意";
+                bg = Color.parseColor("#FFF8E1");   // 琥珀 50
+                fg = Color.parseColor("#E65100");   // 橘 900
+            } else {
+                levelText = "安全";
+                bg = Color.parseColor("#E8F5E9");   // 綠 50
+                fg = Color.parseColor("#1B5E20");   // 綠 900
+            }
+            h.chipLevel.setText(levelText);
+            h.chipLevel.setChipBackgroundColor(ColorStateList.valueOf(bg));
+            h.chipLevel.setTextColor(fg);
+        }
+
+        // 同步狀態（右上角 Chip）或舊版 tvMeta 退化顯示
+        String syncLabel = r.isSynced() ? "已上傳" : "待上傳";
+        if (h.chipSync != null) {
+            h.chipSync.setText(syncLabel);
+            h.chipSync.setContentDescription(syncLabel);
+            // 若你已添加雲朵圖示，可在此依狀態切換：
+            // h.chipSync.setChipIconResource(r.isSynced() ? R.drawable.ic_cloud_done_24 : R.drawable.ic_cloud_off_24);
+        } else if (h.tvMeta != null) {
+            // 舊版佈局（沒有 Chip），用 tvMeta 顯示更清楚的文字（不再顯示 ID）
+            h.tvMeta.setText(syncLabel);
+        }
+
+        // 可選的摘要列（若你的版型有 rowMetrics，可在這裡決定顯示／隱藏）
+        if (h.rowMetrics != null) {
+            h.rowMetrics.setVisibility(View.GONE); // 目前沒有額外指標就先隱藏
+        }
+
+        // 點擊事件
         h.itemView.setOnClickListener(v -> {
             if (clickListener != null) clickListener.onItemClick(v, h.getBindingAdapterPosition(), r);
         });
@@ -120,13 +166,23 @@ public class FatigueAdapter extends RecyclerView.Adapter<FatigueAdapter.ViewHold
     static class ViewHolder extends RecyclerView.ViewHolder {
         final TextView tvScore;
         final TextView tvTime;
+
+        // 新版：Chip；舊版：tvMeta 退場（保留做相容）
+        final Chip chipLevel;
+        final Chip chipSync;
         final TextView tvMeta;
+
+        // 可選：摘要列
+        final View rowMetrics;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvScore = itemView.findViewById(R.id.tvScore);
-            tvTime  = itemView.findViewById(R.id.tvTime);
-            tvMeta  = itemView.findViewById(R.id.tvMeta);
+            tvScore    = itemView.findViewById(R.id.tvScore);
+            tvTime     = itemView.findViewById(R.id.tvTime);
+            chipLevel  = itemView.findViewById(R.id.chipLevel);
+            chipSync   = itemView.findViewById(R.id.chipSync);
+            tvMeta     = itemView.findViewById(R.id.tvMeta);     // 可能為 null（新版沒有）
+            rowMetrics = itemView.findViewById(R.id.rowMetrics); // 可能為 null
         }
     }
 }

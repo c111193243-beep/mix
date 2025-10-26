@@ -24,49 +24,50 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '17'
-    }
+    kotlinOptions { jvmTarget = '17' }
 
-    buildFeatures {
-        compose true
-    }
+    // 只有這個模組真的需要 Compose 才開
+    buildFeatures { compose true }
+
+    // 與 Kotlin 1.9.24 相容（取自版本表）
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
     }
 }
 
 dependencies {
     // 其他模組
     implementation project(':shared-core')
-    implementation project(':ui-components')
     implementation project(':detection-logic')
+    // ⚠️ 不要依賴 :ui-components，避免循環依賴（UI -> camera 再 -> UI）
+    // implementation project(':ui-components')
 
-    // Kotlin Coroutines（已在 catalog 定義）
+    // Kotlin 協程
     implementation libs.kotlinx.coroutines.android
 
-    // AndroidX 基礎
+    // AndroidX 基礎 / Lifecycle
     implementation libs.core.ktx
     implementation libs.lifecycle.runtime.ktx
-    implementation libs.lifecycle.viewmodel.ktx   // ← 修正：加上 .ktx
+    implementation libs.lifecycle.viewmodel.ktx
 
-    // Compose（直接座標，避免你再去加 catalog 條目）
-    implementation platform("androidx.compose:compose-bom:2024.09.02")
-    implementation "androidx.compose.ui:ui"
-    implementation "androidx.compose.runtime:runtime"
-    implementation "androidx.compose.ui:ui-tooling"
-    implementation "androidx.compose.material3:material3"
+    // Compose（用版本表的 BOM 與條目）
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.compose.ui
+    implementation libs.androidx.compose.runtime
+    implementation libs.androidx.compose.ui.tooling
+    implementation libs.androidx.compose.material3
 
-    // CameraX（使用我們在 catalog 定義好的別名）
-    // 以前：implementation platform(libs.androidx.camera.bom)  ← 刪掉
+    // CameraX
     implementation libs.camerax.core
     implementation libs.camerax.camera2
     implementation libs.camerax.lifecycle
     implementation libs.camerax.view
 
+    // ✅ 若 import 有 com.google.common.util.concurrent.*（常見於 ProcessCameraProvider）
+    implementation "androidx.concurrent:concurrent-futures-ktx:1.2.0"
 
-    // （先移除）MediaPipe：如果這個模組真的用到再加回來，並指定版本
-    // implementation "com.google.mediapipe:tasks-vision:<version>"
+    // ✅ 若此模組的檔案有 import com.google.mediapipe.*（例如 FaceLandmarkerResult）
+    implementation libs.mediapipe.tasks.vision
 
     // 測試
     testImplementation libs.junit

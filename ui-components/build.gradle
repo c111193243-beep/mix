@@ -33,7 +33,7 @@ android {
     }
     composeOptions {
         // Kotlin 1.9.22 對應的 Compose Compiler
-        kotlinCompilerExtensionVersion = "1.5.10"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 }
 
@@ -66,4 +66,8 @@ dependencies {
     implementation libs.camerax.camera2
     implementation libs.camerax.lifecycle
     implementation libs.camerax.view
+
+    // ✅ MediaPipe Tasks（為了 com.google.mediapipe.*）
+    // 若你的版本 catalog 沒有別名，就用直寫字串版本
+    implementation "com.google.mediapipe:tasks-vision:0.10.14"
 }
